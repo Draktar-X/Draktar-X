@@ -1,7 +1,7 @@
-"""Draws assets/actividad.svg: contributions per day over the last 31 days, in the profile's spectrum colours.
+"""Draws assets/actividad.svg: contributions per day over the last 31 days as a smooth line chart.
 
 Reads the contribution calendar of the profile owner (GitHub GraphQL API) and writes a wide bar-chart card
-that matches the Commits card. Standard library only.
+in the same look as the activity graph the profile used before. Standard library only.
 
 Env: GH_TOKEN (required unless --sample/--empty), GH_USER.
 Usage: python actividad.py [--sample | --empty] [output.svg]
@@ -67,40 +67,54 @@ else:
 counts = [n for _, n in days]
 total, peak = sum(counts), max(counts) if counts else 0
 
-# ---------------------------------------------------------------- card
-W, H = 880, 230
-L, R, TOP, BASE = 56, 850, 62, 180
-MONO = "'JetBrains Mono','Fira Code',Consolas,'DejaVu Sans Mono',Menlo,monospace"
+# ---------------------------------------------------------------- card (line chart, same look as the activity graph)
+W, H = 1200, 300
+L, R, TOP, BASE = 132, 1172, 70, 222
 SANS = "'Segoe UI',Ubuntu,'Helvetica Neue',sans-serif"
-ymax = max(5, math.ceil(peak * 1.1 / 5) * 5) if total else 5
-slot = (R - L) / len(days)
-bw = slot * 0.62
-peak_h = (BASE - TOP) * peak / ymax if total else 0
+step = max(1, math.ceil(peak / 4))
+ymax = step * 4
+n = len(counts)
+xs = [L + (R - L) * i / (n - 1) for i in range(n)]
+ys = [BASE - (BASE - TOP) * c / ymax for c in counts]
+
+# monotone cubic (Fritsch-Carlson) so the curve never dips below zero or overshoots a peak
+d = [(ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]) for i in range(n - 1)]
+m = [d[0]] + [0.0 if d[i - 1] * d[i] <= 0 else (d[i - 1] + d[i]) / 2 for i in range(1, n - 1)] + [d[-1]]
+for i in range(n - 1):
+    if d[i] == 0:
+        m[i] = m[i + 1] = 0.0
+    else:
+        a, b = m[i] / d[i], m[i + 1] / d[i]
+        s = a * a + b * b
+        if s > 9:
+            t = 3 / math.sqrt(s)
+            m[i], m[i + 1] = t * a * d[i], t * b * d[i]
+path = f"M{xs[0]:.1f} {ys[0]:.1f}"
+for i in range(n - 1):
+    h = (xs[i + 1] - xs[i]) / 3
+    path += (f" C{xs[i] + h:.1f} {ys[i] + m[i] * h:.1f} {xs[i + 1] - h:.1f} {ys[i + 1] - m[i + 1] * h:.1f}"
+             f" {xs[i + 1]:.1f} {ys[i + 1]:.1f}")
+area = path + f" L{xs[-1]:.1f} {BASE} L{xs[0]:.1f} {BASE} Z"
+
 parts = []
-for i in range(6):
-    v = ymax / 5 * i
-    yy = BASE - (BASE - TOP) * i / 5
-    parts.append(f'<line x1="{L}" y1="{yy:.1f}" x2="{R}" y2="{yy:.1f}" stroke="#1f2228"/>'
-                 f'<text x="{L - 8}" y="{yy + 3:.1f}" text-anchor="end" font-family="{SANS}" font-size="10" fill="#8b949e">{v:g}</text>')
-parts.append(f'<line x1="{L}" y1="{BASE}" x2="{R}" y2="{BASE}" stroke="#6e7681"/>')
-for i, (d, n) in enumerate(days):
-    x = L + i * slot + (slot - bw) / 2
-    bh = max(1.5, (BASE - TOP) * n / ymax) if n else 1.5
-    parts.append(f'<rect x="{x:.1f}" y="{BASE - bh:.1f}" width="{bw:.1f}" height="{bh:.1f}" rx="1" fill="url(#g)">'
-                 f'<title>{d} · {n} contribuciones</title></rect>')
-    if i % 5 == 0 or i == len(days) - 1:
-        dd = date.fromisoformat(d)
-        parts.append(f'<text x="{x + bw / 2:.1f}" y="{BASE + 16}" text-anchor="middle" font-family="{SANS}" font-size="10" fill="#8b949e">{dd.day:02d}/{dd.month:02d}</text>')
-note = "datos de ejemplo" if "--sample" in sys.argv else (f"{total} contribuciones" if total else "sin contribuciones en este periodo")
-gtop = BASE - max(peak_h, 8)
+for k in range(5):
+    v = step * k
+    yy = BASE - (BASE - TOP) * k / 4
+    parts.append(f'<line x1="{L}" y1="{yy:.1f}" x2="{R}" y2="{yy:.1f}" stroke="#3a3f47" stroke-dasharray="2 3"/>'
+                 f'<text x="{L - 14}" y="{yy + 4:.1f}" text-anchor="end" font-family="{SANS}" font-size="13" font-weight="600" fill="#C9D1D9">{v}</text>')
+for i, x in enumerate(xs):
+    parts.append(f'<line x1="{x:.1f}" y1="{TOP}" x2="{x:.1f}" y2="{BASE}" stroke="#3a3f47" stroke-dasharray="2 3"/>'
+                 f'<text x="{x:.1f}" y="{BASE + 22}" text-anchor="middle" font-family="{SANS}" font-size="13" font-weight="600" fill="#C9D1D9">{i + 1}</text>')
+parts.append(f'<path d="{area}" fill="#484F58" opacity=".22"/>')
+parts.append(f'<path d="{path}" fill="none" stroke="#A3A8B3" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>')
+for i, (x, y) in enumerate(zip(xs, ys)):
+    parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="#E6EDF3"><title>{days[i][0]} · {counts[i]} contribuciones</title></circle>')
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="Actividad de los últimos 31 días">
 <title>Actividad de los últimos 31 días</title>
-<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="{gtop:.1f}" y2="{BASE}">
-<stop offset="0" stop-color="#e5383d"/><stop offset="0.07" stop-color="#e5383d"/><stop offset="0.075" stop-color="#e6edf3"/>
-<stop offset="0.5" stop-color="#a3a8b3"/><stop offset="1" stop-color="#3a3f47"/></linearGradient></defs>
 <rect x="0.5" y="0.5" width="{W - 1}" height="{H - 1}" rx="6" fill="#141518" stroke="#30363D"/>
-<text x="32" y="40" font-family="{SANS}" font-size="20" fill="#E6EDF3">Actividad</text>
-<text x="{W - 32}" y="40" text-anchor="end" font-family="{MONO}" font-size="10" fill="#6e7681">últimos 31 días · {note}</text>
+<text x="{W / 2}" y="40" text-anchor="middle" font-family="{SANS}" font-size="21" font-weight="600" fill="#E6EDF3">Actividad de los últimos 31 días</text>
+<text transform="translate(78 {(TOP + BASE) / 2}) rotate(-90)" text-anchor="middle" font-family="{SANS}" font-size="13" font-weight="600" fill="#C9D1D9">Contributions</text>
+<text x="{(L + R) / 2}" y="{BASE + 52}" text-anchor="middle" font-family="{SANS}" font-size="13" font-weight="600" fill="#C9D1D9">Days</text>
 {''.join(parts)}
 </svg>
 """
