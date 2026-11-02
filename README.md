@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/header.svg" width="100%" alt="Draktar-X - dalcivarg@opticom.ec: caballero ASCII y ficha de perfil">
+<img src="assets/header.svg" width="100%" alt="Draktar-X - dalcivarg@opticom.ec: dragón ASCII en una torre de telecomunicaciones y ficha de perfil">
 
 <br><br>
 
@@ -19,9 +19,5 @@
 <br><br>
 
 <a href="mailto:dalcivarg@opticom.ec"><img src="assets/btn-gmail.svg" alt="Gmail"></a>
-
-<br><br>
-
-<sub>Caballero ASCII por <a href="https://github.com/arimecoa/GIVEAWAY-ASCII">arimecoa</a></sub>
 
 </div>
