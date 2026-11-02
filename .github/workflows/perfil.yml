@@ -25,10 +25,11 @@ jobs:
         run: |
           python3 .github/scripts/commits_hora.py assets/commits-hora.svg
           python3 .github/scripts/actividad.py assets/actividad.svg
+          python3 .github/scripts/lenguajes.py assets/lenguajes.svg
 
       - name: Guardar cambios
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/commits-hora.svg assets/actividad.svg
+          git add assets/commits-hora.svg assets/actividad.svg assets/lenguajes.svg
           git diff --cached --quiet || (git commit -m "Actualizar commits y actividad" && git push)

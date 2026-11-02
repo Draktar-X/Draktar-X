@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="200" viewBox="0 0 340 200" role="img" aria-label="Top Languages by Repo">
+<title>Top Languages by Repo</title>
+<style>* { font-family: 'Segoe UI', Ubuntu, "Helvetica Neue", Sans-Serif }</style>
+<defs><linearGradient id="ember" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D1B866"/><stop offset=".55" stop-color="#E5383D"/><stop offset="1" stop-color="#8E1014"/></linearGradient></defs>
+<rect x="1" y="1" rx="5" ry="5" height="99%" width="99.41176470588235%" stroke="#30363D" stroke-width="1" fill="#141518"/>
+<text x="30" y="40" style="font-size:22px;fill:#E6EDF3">Top Languages by Repo</text>
+<rect x="40" y="58.0" width="14" height="14" fill="#E5383D" stroke="#141518" stroke-width="1"/><text x="56.8" y="70.0" style="fill:#C9D1D9;font-size:14px">Python<tspan dx="6" style="fill:#6e7681;font-size:12px">100%</tspan></text><path d="M230.00 60.00 A60 60 0 0 1 230.00 180.00 L230.00 155.00 A35 35 0 0 0 230.00 85.00 Z M230.00 180.00 A60 60 0 0 1 230.00 60.00 L230.00 85.00 A35 35 0 0 0 230.00 155.00 Z" fill="url(#ember)"/>
+</svg>
